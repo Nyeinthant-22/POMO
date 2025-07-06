@@ -2,7 +2,7 @@
 
 // Define the cache name. Increment this version number whenever you make changes
 // to the cached assets or the caching strategy, to ensure users get the latest version.
-const CACHE_NAME = 'pomodoro-timer-v3'; // Incremented cache version
+const CACHE_NAME = 'pomodoro-timer-v4'; // Incremented cache version
 
 // List of URLs to pre-cache during the 'install' event.
 // These are the essential files for your application to load and function.
@@ -98,6 +98,11 @@ self.addEventListener('activate', (event) => {
  * Includes handling for 'no-cors' requests for external resources.
  */
 self.addEventListener('fetch', (event) => {
+    // IMPORTANT: Ignore requests that are not for HTTP/HTTPS schemes (e.g., chrome-extension://)
+    if (!event.request.url.startsWith('http')) {
+        return; // Do not intercept non-HTTP/HTTPS requests
+    }
+
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             // 1. Cache First: If a cached response is found, return it immediately.
