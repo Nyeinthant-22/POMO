@@ -2,7 +2,7 @@
 
 // Define the cache name. Increment this version number whenever you make changes
 // to the cached assets or the caching strategy, to ensure users get the latest version.
-const CACHE_NAME = 'pomodoro-timer-v4'; // Incremented cache version
+const CACHE_NAME = 'pomodoro-timer-v5'; // Incremented cache version for new strategy
 
 // List of URLs to pre-cache during the 'install' event.
 // These are the essential files for your application to load and function.
@@ -14,7 +14,8 @@ const urlsToCache = [
 ];
 
 // URLs for external assets that might have CORS issues, handled separately.
-const externalUrlsToCache = [
+// These are the CSS files that *request* the actual fonts.
+const externalCssUrlsToCache = [
     'https://cdn.tailwindcss.com', // Tailwind CSS CDN
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css', // Font Awesome CSS
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' // Google Fonts CSS link
@@ -37,10 +38,10 @@ self.addEventListener('install', (event) => {
                 // Cache local assets directly
                 await cache.addAll(urlsToCache);
 
-                console.log('[Service Worker] Attempting to cache external assets:', externalUrlsToCache);
-                // Attempt to cache external assets. Use Promise.allSettled to allow some to fail.
+                console.log('[Service Worker] Attempting to cache external CSS assets:', externalCssUrlsToCache);
+                // Attempt to cache external CSS assets. Use Promise.allSettled to allow some to fail.
                 const results = await Promise.allSettled(
-                    externalUrlsToCache.map(url =>
+                    externalCssUrlsToCache.map(url =>
                         fetch(url, { mode: 'no-cors' }) // Fetch with no-cors
                             .then(response => {
                                 if (response.ok || response.type === 'opaque') { // Check for ok status or opaque response
@@ -54,9 +55,9 @@ self.addEventListener('install', (event) => {
 
                 results.forEach((result, index) => {
                     if (result.status === 'fulfilled') {
-                        console.log(`[Service Worker] Successfully cached: ${externalUrlsToCache[index]}`);
+                        console.log(`[Service Worker] Successfully cached: ${externalCssUrlsToCache[index]}`);
                     } else {
-                        console.warn(`[Service Worker] Failed to cache (CORS/Network): ${externalUrlsToCache[index]} - ${result.reason}`);
+                        console.warn(`[Service Worker] Failed to cache (CORS/Network): ${externalCssUrlsToCache[index]} - ${result.reason}`);
                     }
                 });
             })
@@ -95,7 +96,7 @@ self.addEventListener('activate', (event) => {
  * fetch from the network, or provide a fallback.
  *
  * Strategy: Cache First, then Network, with Network Fallback to Cache on failure.
- * Includes handling for 'no-cors' requests for external resources.
+ * This is crucial for handling dynamically requested assets like fonts.
  */
 self.addEventListener('fetch', (event) => {
     // IMPORTANT: Ignore requests that are not for HTTP/HTTPS schemes (e.g., chrome-extension://)
@@ -105,16 +106,17 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            // 1. Cache First: If a cached response is found, return it immediately.
+            // If a cached response is found, return it immediately.
             if (cachedResponse) {
                 console.log('[Service Worker] Serving from cache:', event.request.url);
                 return cachedResponse;
             }
 
-            // 2. Network Request: If not in cache, try fetching from the network.
+            // If not in cache, try fetching from the network.
             console.log('[Service Worker] Fetching from network:', event.request.url);
 
             // Determine if the request is for an external resource that might need 'no-cors'
+            // This is especially important for fonts (woff2, ttf, etc.) which are typically external.
             const isExternal = !event.request.url.startsWith(self.location.origin);
             const fetchOptions = isExternal ? { mode: 'no-cors' } : {};
 
@@ -127,10 +129,10 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     }
 
-                    // 3. Cache Network Response: Clone the response before caching,
-                    // as a response stream can only be consumed once.
+                    // Clone the response before caching, as a response stream can only be consumed once.
                     const responseToCache = networkResponse.clone();
 
+                    // Only cache successful responses (or opaque ones from no-cors)
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
                         console.log('[Service Worker] Cached new asset:', event.request.url);
@@ -142,16 +144,15 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch((error) => {
-                    // 4. Offline Fallback: If the network fetch fails (e.g., user is offline),
+                    // If the network fetch fails (e.g., user is offline),
                     // try to return a cached response as a fallback.
                     console.error('[Service Worker] Network fetch failed for:', event.request.url, error);
 
                     // For navigation requests (like the root URL), fall back to index.html.
-                    // For other assets, try to find them in the cache.
                     if (event.request.mode === 'navigate') {
                         return caches.match('/index.html');
                     }
-                    // For other types of requests (e.g., images, scripts),
+                    // For other types of requests (e.g., images, scripts, *fonts*),
                     // if they were previously cached, they will be returned here.
                     return caches.match(event.request);
                 });
