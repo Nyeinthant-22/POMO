@@ -1,86 +1,37 @@
 // service-worker.js
-
-// Define the cache name. Increment this version number whenever you make changes
-// to the cached assets or the caching strategy, to ensure users get the latest version.
-const CACHE_NAME = 'pomodoro-timer-v6'; // Incremented cache version for robustness
-
-// List of URLs to pre-cache during the 'install' event.
-// These are the essential files for your application to load and function.
+const CACHE_NAME = 'pomodoro-timer-v1';
 const urlsToCache = [
-    '/', // The root URL of your application (often resolves to index.html)
+    '/',
     '/index.html',
-    './img/POMO_LOGO.png', // Your application's logo
-    './audio/alarm_beep_3.mp3' // Your alarm sound file
+    'https://cdn.tailwindcss.com',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
+    'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMwLtVKi7fApS_t.woff2', // Inter font file
+    './audio/alarm_beep_3.mp3', // Ensure this path is correct
+    './img/POMO_LOGO.png' // Ensure this path is correct
 ];
 
-// URLs for external assets that might have CORS issues, handled separately.
-// These are the CSS files that *request* the actual fonts.
-const externalCssUrlsToCache = [
-    'https://cdn.tailwindcss.com', // Tailwind CSS CDN
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css', // Font Awesome CSS
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' // Google Fonts CSS link
-];
-
-/**
- * 'install' event listener:
- * This event is fired when the service worker is first registered.
- * It's used to pre-cache essential assets, making them available immediately offline.
- *
- * Modified to use Promise.allSettled for caching, allowing some external fetches
- * to fail gracefully without preventing the entire installation.
- */
+// Install event: Caches all assets
 self.addEventListener('install', (event) => {
-    console.log('[Service Worker] Installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(async (cache) => {
-                console.log('[Service Worker] Caching essential local assets:', urlsToCache);
-                // Cache local assets directly
-                await cache.addAll(urlsToCache);
-
-                console.log('[Service Worker] Attempting to cache external CSS assets:', externalCssUrlsToCache);
-                // Attempt to cache external CSS assets. Use Promise.allSettled to allow some to fail.
-                const results = await Promise.allSettled(
-                    externalCssUrlsToCache.map(url =>
-                        fetch(url, { mode: 'no-cors' }) // Fetch with no-cors
-                            .then(response => {
-                                if (response.ok || response.type === 'opaque') { // Check for ok status or opaque response
-                                    return cache.put(url, response);
-                                } else {
-                                    throw new Error(`Failed to fetch and cache (status: ${response.status}): ${url}`);
-                                }
-                            })
-                    )
-                );
-
-                results.forEach((result, index) => {
-                    if (result.status === 'fulfilled') {
-                        console.log(`[Service Worker] Successfully cached: ${externalCssUrlsToCache[index]}`);
-                    } else {
-                        console.warn(`[Service Worker] Failed to cache (CORS/Network): ${externalCssUrlsToCache[index]} - ${result.reason}`);
-                    }
-                });
+            .then((cache) => {
+                console.log('Opened cache');
+                return cache.addAll(urlsToCache);
             })
-            .catch((error) => {
-                console.error('[Service Worker] General installation error:', error);
+            .catch(error => {
+                console.error('Failed to cache during install:', error);
             })
     );
 });
 
-/**
- * 'activate' event listener:
- * This event is fired when the service worker becomes active.
- * It's commonly used to clean up old caches, ensuring only the latest version is used.
- */
+// Activate event: Cleans up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[Service Worker] Activating...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    // Delete any caches that are not the current CACHE_NAME.
                     if (cacheName !== CACHE_NAME) {
-                        console.log('[Service Worker] Deleting old cache:', cacheName);
+                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -89,93 +40,41 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-/**
- * 'fetch' event listener:
- * This event is fired for every network request made by the page.
- * It allows the service worker to intercept requests and serve responses from the cache,
- * fetch from the network, or provide a fallback.
- *
- * Strategy: Cache First, then Network, with Network Fallback to Cache on failure.
- * This is crucial for handling dynamically requested assets like fonts.
- * Added specific handling for external fonts to be more resilient.
- */
+// Fetch event: Serves cached content first, then fetches from network
 self.addEventListener('fetch', (event) => {
-    // IMPORTANT: Ignore requests that are not for HTTP/HTTPS schemes (e.g., chrome-extension://)
-    if (!event.request.url.startsWith('http')) {
-        return; // Do not intercept non-HTTP/HTTPS requests
-    }
-
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            // Determine if the request is for an external resource (like a font from CDN)
-            const isExternal = !event.request.url.startsWith(self.location.origin);
-
-            // If a cached response is found, return it immediately.
-            if (cachedResponse) {
-                console.log('[Service Worker] Serving from cache:', event.request.url);
-
-                // For external resources (especially fonts), try to revalidate in the background
-                // to ensure we always have the freshest, valid version.
-                if (isExternal) {
-                    event.waitUntil(
-                        fetch(event.request, { mode: 'no-cors' })
-                            .then((networkResponse) => {
-                                if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
-                                    return caches.open(CACHE_NAME).then((cache) => {
-                                        console.log('[Service Worker] Revalidating and caching:', event.request.url);
-                                        return cache.put(event.request, networkResponse.clone());
-                                    });
-                                }
-                            })
-                            .catch((error) => {
-                                console.warn('[Service Worker] Background revalidation failed for:', event.request.url, error);
-                            })
-                    );
+        caches.match(event.request)
+            .then((response) => {
+                // Cache hit - return response
+                if (response) {
+                    return response;
                 }
-                return cachedResponse;
-            }
+                // No cache hit - fetch from network
+                return fetch(event.request).then(
+                    (response) => {
+                        // Check if we received a valid response
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                            return response;
+                        }
 
-            // If not in cache, try fetching from the network.
-            console.log('[Service Worker] Fetching from network:', event.request.url);
+                        // IMPORTANT: Clone the response. A response is a stream
+                        // and can only be consumed once. We must clone it so that
+                        // the browser can consume one and we can consume the other.
+                        const responseToCache = response.clone();
 
-            const fetchOptions = isExternal ? { mode: 'no-cors' } : {};
+                        caches.open(CACHE_NAME)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
 
-            return fetch(event.request, fetchOptions)
-                .then((networkResponse) => {
-                    // Check if we received a valid response from the network.
-                    // For 'no-cors' requests, networkResponse.ok will be false, but type will be 'opaque'.
-                    if (!networkResponse || (!networkResponse.ok && networkResponse.type !== 'opaque')) {
-                        // If the network response is not valid (and not opaque), just return it without caching.
-                        return networkResponse;
+                        return response;
                     }
-
-                    // Clone the response before caching, as a response stream can only be consumed once.
-                    const responseToCache = networkResponse.clone();
-
-                    // Only cache successful responses (or opaque ones from no-cors)
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                        console.log('[Service Worker] Cached new asset:', event.request.url);
-                    }).catch((cacheError) => {
-                        console.warn('[Service Worker] Failed to cache network response:', event.request.url, cacheError);
-                    });
-
-                    // Return the original network response to the page.
-                    return networkResponse;
-                })
-                .catch((error) => {
-                    // If the network fetch fails (e.g., user is offline),
-                    // try to return a cached response as a fallback.
-                    console.error('[Service Worker] Network fetch failed for:', event.request.url, error);
-
-                    // For navigation requests (like the root URL), fall back to index.html.
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('/index.html');
-                    }
-                    // For other types of requests (e.g., images, scripts, *fonts*),
-                    // if they were previously cached, they will be returned here.
-                    return caches.match(event.request);
+                ).catch(error => {
+                    console.error('Fetch failed for:', event.request.url, error);
+                    // This is where you could return a custom offline page
+                    // For now, it will just fail to load the resource.
+                    // Example: return caches.match('/offline.html');
                 });
-        })
+            })
     );
 });
