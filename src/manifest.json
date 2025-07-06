@@ -1,0 +1,21 @@
+{
+    "name": "POMO Timer",
+    "short_name": "POMO",
+    "description": "A simple Pomodoro Timer for focus and productivity.",
+    "start_url": "../index.html",  
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "../img/POMO_LOGO.png", 
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "../img/POMO_LOGO.png", 
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
