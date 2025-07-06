@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro Timer</title>
-    <!-- Link to manifest.json (UPDATED PATH) -->
-    <link rel="manifest" href="./src/manifest.json">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
@@ -467,22 +465,20 @@
             loadTheme();
             updateTimerDisplay();
             timerSubtitle.textContent = "Ready"; // Initial state
-        });
 
-        // Register Service Worker (UPDATED PATH)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // The path here is relative to the root of your application,
-                // so if service-worker.js is in 'src/', you need '/src/service-worker.js'
-                navigator.serviceWorker.register('/src/service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registered with scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('Service Worker registration failed:', error);
-                    });
-            });
-        }
+            // Register Service Worker for offline capability
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('Service Worker registered with scope:', registration.scope);
+                        })
+                        .catch(error => {
+                            console.error('Service Worker registration failed:', error);
+                        });
+                });
+            }
+        });
     </script>
 </body>
 </html>
