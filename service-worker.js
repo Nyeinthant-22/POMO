@@ -2,7 +2,7 @@
 
 // Define the cache name. Increment this version number whenever you make changes
 // to the cached assets or the caching strategy, to ensure users get the latest version.
-const CACHE_NAME = 'pomodoro-timer-v5'; // Incremented cache version for new strategy
+const CACHE_NAME = 'pomodoro-timer-v6'; // Incremented cache version for robustness
 
 // List of URLs to pre-cache during the 'install' event.
 // These are the essential files for your application to load and function.
@@ -97,6 +97,7 @@ self.addEventListener('activate', (event) => {
  *
  * Strategy: Cache First, then Network, with Network Fallback to Cache on failure.
  * This is crucial for handling dynamically requested assets like fonts.
+ * Added specific handling for external fonts to be more resilient.
  */
 self.addEventListener('fetch', (event) => {
     // IMPORTANT: Ignore requests that are not for HTTP/HTTPS schemes (e.g., chrome-extension://)
@@ -106,18 +107,37 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
+            // Determine if the request is for an external resource (like a font from CDN)
+            const isExternal = !event.request.url.startsWith(self.location.origin);
+
             // If a cached response is found, return it immediately.
             if (cachedResponse) {
                 console.log('[Service Worker] Serving from cache:', event.request.url);
+
+                // For external resources (especially fonts), try to revalidate in the background
+                // to ensure we always have the freshest, valid version.
+                if (isExternal) {
+                    event.waitUntil(
+                        fetch(event.request, { mode: 'no-cors' })
+                            .then((networkResponse) => {
+                                if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+                                    return caches.open(CACHE_NAME).then((cache) => {
+                                        console.log('[Service Worker] Revalidating and caching:', event.request.url);
+                                        return cache.put(event.request, networkResponse.clone());
+                                    });
+                                }
+                            })
+                            .catch((error) => {
+                                console.warn('[Service Worker] Background revalidation failed for:', event.request.url, error);
+                            })
+                    );
+                }
                 return cachedResponse;
             }
 
             // If not in cache, try fetching from the network.
             console.log('[Service Worker] Fetching from network:', event.request.url);
 
-            // Determine if the request is for an external resource that might need 'no-cors'
-            // This is especially important for fonts (woff2, ttf, etc.) which are typically external.
-            const isExternal = !event.request.url.startsWith(self.location.origin);
             const fetchOptions = isExternal ? { mode: 'no-cors' } : {};
 
             return fetch(event.request, fetchOptions)
