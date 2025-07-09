@@ -117,7 +117,7 @@
         }
 
         /* Pop-up Modal Styles */
-        #popup-overlay {
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -131,7 +131,7 @@
             transition: opacity 0.3s ease;
         }
 
-        #popup-content {
+        .modal-content {
             background-color: var(--popup-bg);
             color: var(--popup-text);
             padding: 2rem;
@@ -144,7 +144,7 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        #popup-close-btn {
+        .modal-close-btn {
             margin-top: 1.5rem;
             padding: 0.75rem 2rem;
             border-radius: 9999px; /* Full rounded */
@@ -156,19 +156,25 @@
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        #popup-close-btn:hover {
+        .modal-close-btn:hover {
             background-color: var(--button-hover-bg);
         }
     </style>
 </head>
 <body class="font-inter">
+        <script src="/_vercel/insights/script.js"></script>
     <!-- TOP BAR -->
     <div id="top-bar" class="fixed top-0 left-0 right-0 py-2 px-4 flex justify-between items-center z-10">
         <h1 class="text-2xl font-bold">POMO</h1>
-        <button id="theme-toggle" class="p-3 rounded-full shadow-md">
-            <!-- Icon will be updated by JavaScript -->
-            <i class="fas fa-sun text-xl"></i>
-        </button>
+        <div class="flex items-center space-x-4">
+            <button id="settings-btn" class="p-3 rounded-full shadow-md">
+                <i class="fas fa-cog text-xl"></i>
+            </button>
+            <button id="theme-toggle" class="p-3 rounded-full shadow-md">
+                <!-- Icon will be updated by JavaScript -->
+                <i class="fas fa-sun text-xl"></i>
+            </button>
+        </div>
     </div>
 
     <!-- MAIN CONTENT AREA -->
@@ -201,11 +207,28 @@
     </div>
 
     <!-- Pop-up Modal for Time Up -->
-    <div id="popup-overlay" class="hidden" style="display: none;">
-        <div id="popup-content">
+    <div id="popup-overlay" class="modal-overlay hidden" style="display: none;">
+        <div id="popup-content" class="modal-content">
             <h2 class="text-3xl font-bold mb-4">Time's Up!</h2>
             <p class="text-lg mb-6">Your Pomodoro session has ended. Time for a break!</p>
-            <button id="popup-close-btn">Got It!</button>
+            <button id="popup-close-btn" class="modal-close-btn">Got It!</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal-overlay" class="modal-overlay hidden" style="display: none;">
+        <div id="settings-modal-content" class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Adjust Pomodoro Time</h2>
+            <div class="mb-6">
+                <label for="pomodoro-minutes-input" class="block text-lg font-medium mb-2">Minutes:</label>
+                <input type="number" id="pomodoro-minutes-input"
+                       class="w-full p-3 border border-gray-300 rounded-lg text-center text-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       value="25" min="1" max="120">
+            </div>
+            <div class="flex justify-center gap-4">
+                <button id="save-settings-btn" class="modal-close-btn px-6 py-3">Save</button>
+                <button id="cancel-settings-btn" class="modal-close-btn px-6 py-3">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -225,6 +248,7 @@
         const resetBtn = document.getElementById('reset-btn');
         const themeToggleBtn = document.getElementById('theme-toggle');
         const themeToggleIcon = themeToggleBtn.querySelector('i');
+        const settingsBtn = document.getElementById('settings-btn'); // New: Settings button
         const focusModeBtn = document.getElementById('focus-mode-btn');
         const topBar = document.getElementById('top-bar');
         const mainTimerSection = document.getElementById('main-timer-section');
@@ -235,16 +259,24 @@
         const popupOverlay = document.getElementById('popup-overlay'); // Get the pop-up overlay
         const popupCloseBtn = document.getElementById('popup-close-btn'); // Get the pop-up close button
 
+        // New: Settings modal elements
+        const settingsModalOverlay = document.getElementById('settings-modal-overlay');
+        const pomodoroMinutesInput = document.getElementById('pomodoro-minutes-input');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+
         // Timer variables
-        let minutes = 25;
+        let minutes = 25; // Default initial minutes
         let seconds = 0;
         let intervalId = null;
         let isRunning = false;
         let hasInteracted = false; // New flag to track user interaction for audio autoplay
+        let defaultPomodoroMinutes = 25; // New: Stores the user's preferred default time
 
         // --- Debugging: Check if elements are correctly retrieved ---
         console.log("popupOverlay element:", popupOverlay);
         console.log("popupCloseBtn element:", popupCloseBtn);
+        console.log("settingsModalOverlay element:", settingsModalOverlay);
 
         /**
          * Updates the timer display with the current minutes and seconds.
@@ -281,6 +313,64 @@
             } else {
                 console.error("Error: popupOverlay element not found when trying to hide popup.");
             }
+        }
+
+        /**
+         * Shows the settings modal.
+         * Populates the input field with the current default Pomodoro minutes.
+         */
+        function showSettingsModal() {
+            if (settingsModalOverlay) {
+                pomodoroMinutesInput.value = defaultPomodoroMinutes; // Set current value
+                settingsModalOverlay.classList.remove('hidden');
+                settingsModalOverlay.style.display = 'flex';
+            } else {
+                console.error("Error: settingsModalOverlay element not found.");
+            }
+        }
+
+        /**
+         * Hides the settings modal.
+         */
+        function hideSettingsModal() {
+            if (settingsModalOverlay) {
+                settingsModalOverlay.classList.add('hidden');
+                settingsModalOverlay.style.display = 'none';
+            } else {
+                console.error("Error: settingsModalOverlay element not found.");
+            }
+        }
+
+        /**
+         * Loads the default Pomodoro time from local storage.
+         * If no time is saved, it defaults to 25 minutes.
+         */
+        function loadSettings() {
+            const savedMinutes = localStorage.getItem('defaultPomodoroMinutes');
+            if (savedMinutes) {
+                defaultPomodoroMinutes = parseInt(savedMinutes, 10);
+            } else {
+                defaultPomodoroMinutes = 25; // Default value
+            }
+            minutes = defaultPomodoroMinutes; // Apply to current timer
+            updateTimerDisplay(); // Update display with loaded time
+        }
+
+        /**
+         * Saves the adjusted Pomodoro time to local storage.
+         * Validates the input and updates the timer.
+         */
+        function saveSettings() {
+            const newMinutes = parseInt(pomodoroMinutesInput.value, 10);
+            if (isNaN(newMinutes) || newMinutes <= 0 || newMinutes > 120) {
+                // Instead of alert, could display a temporary message on the modal
+                console.error("Please enter a valid number of minutes (1-120).");
+                return;
+            }
+            defaultPomodoroMinutes = newMinutes;
+            localStorage.setItem('defaultPomodoroMinutes', defaultPomodoroMinutes);
+            resetTimer(); // Apply new time and reset
+            hideSettingsModal();
         }
 
         /**
@@ -366,12 +456,12 @@
         }
 
         /**
-         * Resets the Pomodoro timer to its initial state (25:00).
+         * Resets the Pomodoro timer to its initial state (defaultPomodoroMinutes:00).
          * Stops any running timer and updates the display and subtitle.
          */
         function resetTimer() {
             stopTimer();
-            minutes = 25;
+            minutes = defaultPomodoroMinutes; // Use the default set by user
             seconds = 0;
             updateTimerDisplay();
             timerSubtitle.textContent = "Ready";
@@ -443,6 +533,9 @@
         stopBtn.addEventListener('click', stopTimer);
         resetBtn.addEventListener('click', resetTimer);
         themeToggleBtn.addEventListener('click', toggleTheme);
+        settingsBtn.addEventListener('click', showSettingsModal); // New: Open settings modal
+        saveSettingsBtn.addEventListener('click', saveSettings); // New: Save settings
+        cancelSettingsBtn.addEventListener('click', hideSettingsModal); // New: Cancel settings
         focusModeBtn.addEventListener('click', enterFocusMode);
         focusStopBtn.addEventListener('click', () => {
             stopTimer();
@@ -463,6 +556,7 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
+            loadSettings(); // New: Load default Pomodoro time
             updateTimerDisplay();
             timerSubtitle.textContent = "Ready"; // Initial state
 
