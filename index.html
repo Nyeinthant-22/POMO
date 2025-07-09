@@ -28,6 +28,8 @@
             --popup-bg: #ffffff;
             --popup-text: #1a202c;
             --popup-border: #cbd5e0;
+            --timer-text-color: var(--text-color); /* Default to general text color */
+            --input-text-color: #1a202c; /* Default input text color for white theme */
         }
 
         /* Ocean Theme */
@@ -44,6 +46,8 @@
             --popup-bg: #34495e;
             --popup-text: #ecf0f1;
             --popup-border: #4a627a;
+            --timer-text-color: #ffffff; /* Changed to white for timer text in ocean theme */
+            --input-text-color: #1a202c; /* Input text color for ocean theme (dark for contrast) */
         }
 
         /* Apply variables to elements */
@@ -85,6 +89,7 @@
             border: 4px solid var(--timer-border-color);
             transition: border-color 0.3s ease;
             flex-shrink: 0; /* Prevent shrinking on smaller screens */
+            color: var(--timer-text-color); /* Apply the new timer-specific text color */
         }
 
         /* Responsive adjustments for timer display */
@@ -144,6 +149,11 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
+        /* Specific style for the settings input field */
+        #pomodoro-minutes-input {
+            color: var(--input-text-color); /* Use the new input text color variable */
+        }
+
         .modal-close-btn {
             margin-top: 1.5rem;
             padding: 0.75rem 2rem;
@@ -162,7 +172,7 @@
     </style>
 </head>
 <body class="font-inter">
-        <script src="/_vercel/insights/script.js"></script>
+    <script src="/_vercel/insights/script.js"></script>
     <!-- TOP BAR -->
     <div id="top-bar" class="fixed top-0 left-0 right-0 py-2 px-4 flex justify-between items-center z-10">
         <h1 class="text-2xl font-bold">POMO</h1>
