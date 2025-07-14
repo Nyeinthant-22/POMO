@@ -7,7 +7,11 @@ const urlsToCache = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
     'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMwLtVKi7fApS_t.woff2', // Inter font file
     './audio/alarm_beep_3.mp3', // Ensure this path is correct
-    './img/POMO_LOGO.png' // Ensure this path is correct
+    './img/POMO_LOGO.png', // Ensure this path is correct
+    // Add your lofi music URLs here
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
 ];
 
 // Install event: Caches all assets
