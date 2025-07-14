@@ -1,0 +1,263 @@
+/* Define CSS Variables for Themes */
+        :root {
+            /* Light Theme (Soft & Pastel) */
+            --bg-color: #f0f4f8; /* Very light blue-gray */
+            --text-color: #4a5568; /* Soft dark gray */
+            --button-bg: #e2e8f0; /* Light gray */
+            --button-text: #2d3748; /* Darker gray */
+            --button-hover-bg: #cbd5e0; /* Slightly darker gray */
+            --shadow-color: rgba(0, 0, 0, 0.08); /* Soft shadow */
+            --top-bar-bg: #f0f4f8;
+            --timer-border-color: #e2e8f0; /* Light gray border for timer */
+            --link-color: #4299e1; /* Soft blue for links */
+            --popup-bg: #ffffff;
+            --popup-text: #2d3748;
+            --popup-border: #e2e8f0;
+            --timer-text-color: var(--text-color);
+            --input-text-color: #2d3748;
+            --select-bg-color: #ffffff;
+            --select-border-color: #cbd5e0;
+            --glass-bg-color: rgba(255, 255, 255, 0.15); /* Light glass effect */
+            --glass-border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Ocean Theme (Soft Dark) */
+        .ocean-theme {
+            --bg-color: #2c3e50; /* Deep, soft blue */
+            --text-color: #e0e6ed; /* Soft light gray */
+            --button-bg: #34495e; /* Slightly lighter dark blue */
+            --button-text: #e0e6ed;
+            --button-hover-bg: #4a627a; /* Even lighter blue */
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --top-bar-bg: #2c3e50;
+            --timer-border-color: #4a627a; /* Darker blue border for timer */
+            --link-color: #60a5fa; /* Lighter blue for links */
+            --popup-bg: #34495e;
+            --popup-text: #e0e6ed;
+            --popup-border: #4a627a;
+            --timer-text-color: #ffffff;
+            --input-text-color: #e0e6ed;
+            --select-bg-color: #34495e;
+            --select-border-color: #4a627a;
+            --glass-bg-color: rgba(0, 0, 0, 0.2); /* Dark glass effect */
+            --glass-border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Apply variables to elements */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.5s ease, color 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-top: 5rem; /* Space for fixed top bar */
+        }
+
+        #top-bar {
+            background-color: var(--top-bar-bg);
+            color: var(--text-color);
+            box-shadow: 0 4px 12px var(--shadow-color); /* Softer, larger shadow */
+            transition: background-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+            padding: 0.75rem 1.5rem; /* Adjusted padding */
+            border-bottom-left-radius: 1rem; /* Rounded bottom corners */
+            border-bottom-right-radius: 1rem;
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            box-shadow: 0 4px 8px -2px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
+        }
+
+        button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px); /* Subtle lift effect */
+            box-shadow: 0 6px 12px -2px var(--shadow-color), 0 3px 6px -2px var(--shadow-color);
+        }
+
+        #timer-display, #focus-timer-display {
+            width: 300px; /* Fixed width for circular shape */
+            height: 300px; /* Fixed height for circular shape */
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column; /* Align items vertically */
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--timer-border-color); /* Thinner, softer border */
+            background-color: var(--glass-bg-color); /* Glassmorphism background */
+            backdrop-filter: blur(10px); /* Glassmorphism blur */
+            -webkit-backdrop-filter: blur(10px); /* For Safari */
+            box-shadow: 0 8px 32px 0 var(--shadow-color); /* Glassmorphism shadow */
+            transition: border-color 0.5s ease, background-color 0.5s ease, box-shadow 0.5s ease;
+            flex-shrink: 0;
+            color: var(--timer-text-color);
+        }
+
+        /* Responsive adjustments for timer display */
+        @media (max-width: 640px) {
+            #timer-display, #focus-timer-display {
+                width: 260px; /* Slightly smaller for mobile */
+                height: 260px;
+                font-size: 4.5rem; /* Adjust font size for smaller screens */
+            }
+            #timer-label {
+                font-size: 1.1rem; /* Smaller font for label */
+            }
+            #timer-subtitle {
+                font-size: 0.9rem; /* Smaller font for subtitle */
+            }
+            .text-7xl {
+                font-size: 4rem; /* Adjust for smaller screens if needed */
+            }
+            body {
+                padding-top: 4.5rem; /* Adjust for smaller top bar on mobile */
+            }
+            #top-bar {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        #focus-mode-overlay {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        #end-focus-link {
+            color: var(--link-color);
+            transition: color 0.5s ease;
+        }
+
+        /* Pop-up Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Slightly lighter overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0; /* Start hidden for transition */
+            visibility: hidden; /* Hide from screen readers */
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--popup-bg);
+            color: var(--popup-text);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); /* More pronounced shadow */
+            text-align: center;
+            max-width: 320px; /* Smaller max-width */
+            width: 90%;
+            border: 1px solid var(--popup-border); /* Thinner border */
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+            transform: translateY(-20px); /* Start slightly up for animation */
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Specific style for the settings input field */
+        #pomodoro-minutes-input {
+            color: var(--input-text-color);
+            background-color: var(--select-bg-color); /* Match select background */
+            border-color: var(--select-border-color); /* Match select border */
+            transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Custom styles for the select dropdown */
+        #music-select {
+            background-color: var(--select-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--select-border-color);
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+        }
+
+        .modal-close-btn {
+            margin-top: 1.25rem; /* Slightly less margin */
+            padding: 0.6rem 1.8rem; /* Smaller padding */
+            border-radius: 9999px;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            box-shadow: 0 3px 6px -1px var(--shadow-color), 0 1px 3px -1px var(--shadow-color); /* Smaller shadow */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
+        }
+
+        /* Toggle switch specific styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px; /* Width of the track */
+            height: 30px; /* Height of the track */
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 30px; /* Half of height for rounded effect */
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px; /* Size of the thumb */
+            width: 22px; /* Size of the thumb */
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4299e1; /* Soft blue */
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #4299e1;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(30px); /* Adjusted translation for correct positioning */
+            -ms-transform: translateX(30px);
+            transform: translateX(30px);
+        }
