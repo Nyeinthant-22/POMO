@@ -384,7 +384,23 @@
          * Stops any running timer and updates the display and subtitle.
          */
         function resetTimer() {
-            stopTimer(); // This will handle pausing background music if needed
+            // Stop the timer interval
+            clearInterval(intervalId);
+            isRunning = false;
+            
+            // Explicitly pause background music and reset it if it was playing due to a very quick start/reset
+            // Add a small delay or a check to prevent aborting a newly started play()
+            if (currentAudioElement && !currentAudioElement.paused) {
+                 pauseBackgroundMusic(); // This will pause it if it's already playing
+            } else {
+                // If music wasn't playing, but a play() might have been attempted and pending, ensure it's stopped.
+                // This is a more robust way to ensure no pending play() is aborted.
+                if (currentAudioElement) {
+                    currentAudioElement.pause();
+                    currentAudioElement.currentTime = 0;
+                }
+            }
+
             minutes = defaultPomodoroMinutes; // Use the default set by user
             seconds = 0;
             updateTimerDisplay();
